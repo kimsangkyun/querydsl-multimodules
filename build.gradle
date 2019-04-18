@@ -133,13 +133,13 @@ project(':api') {
 
     bootJar {
         manifest {
-            attributes 'Start-Class': 'com.test.api.ApiApplication'
+            attributes 'Start-Class': 'com.musinsa.api.ApiApplication'
         }
     }
 
     bootWar {
         manifest {
-            attributes 'Start-Class': 'com.test.api.ApiApplication'
+            attributes 'Start-Class': 'com.musinsa.api.ApiApplication'
         }
     }
 
