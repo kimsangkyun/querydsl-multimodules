@@ -4,7 +4,7 @@ HELP.md
 !gradle/wrapper/gradle-wrapper.jar
 *.jar
 *.class
-*/generated/*/*.java
+generated
 
 ### STS ###
 .apt_generated
