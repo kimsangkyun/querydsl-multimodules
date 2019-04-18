@@ -1,0 +1,25 @@
+spring:
+  profiles:
+    active: default
+
+---
+
+spring:
+  profiles: local
+
+  datasource:
+    platform: h2
+    url: jdbc:h2:~/testdb;AUTO_SERVER=TRUE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    database-platform: H2
+    show-sql: false
+    hibernate:
+      ddl-auto: create-drop
+  h2:
+    console:
+      enabled: true
+      path: /console
+

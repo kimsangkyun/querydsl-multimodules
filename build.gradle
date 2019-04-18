@@ -1,0 +1,151 @@
+buildscript {
+    ext {
+        springBootVersion = '2.1.4.RELEASE'
+        querydslPluginVersion = '1.0.10' // 플러그인 버전
+    }
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath "io.spring.gradle:dependency-management-plugin:1.0.5.RELEASE"
+        classpath "gradle.plugin.com.ewerk.gradle.plugins:querydsl-plugin:${querydslPluginVersion}"
+        classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.8.2'
+        classpath "gradle.plugin.com.gorylenko.gradle-git-properties:gradle-git-properties:1.4.17"
+    }
+}
+
+plugins {
+    id "com.ewerk.gradle.plugins.querydsl" version "1.0.10"
+}
+
+ext {
+    projectGroup = 'com.main'
+    projectVersion = '0.0.1-' + new Date().format("yyyyMMddHHmmss")
+}
+
+allprojects {
+    apply plugin: 'com.github.kt3k.coveralls'
+    apply plugin: 'jacoco'
+
+    repositories {
+        jcenter()
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'eclipse'
+    apply plugin: 'org.springframework.boot'
+    apply plugin: "io.spring.dependency-management"
+    apply plugin: "com.ewerk.gradle.plugins.querydsl"
+    apply plugin: "idea"
+
+    group = 'com.main'
+    version = '0.0.0'
+    sourceCompatibility = 1.8
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+        implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+        implementation 'org.springframework.boot:spring-boot-starter-web'
+        // https://mvnrepository.com/artifact/com.querydsl/querydsl-jpa
+        compile group: 'com.querydsl', name: 'querydsl-jpa', version: '4.1.4'
+
+        // https://mvnrepository.com/artifact/com.querydsl/querydsl-apt
+        compile group: 'com.querydsl', name: 'querydsl-apt', version: '4.1.4'
+
+        // https://mvnrepository.com/artifact/com.querydsl/querydsl-core
+        compile group: 'com.querydsl', name: 'querydsl-core', version: '4.1.4'
+
+        compileOnly 'org.projectlombok:lombok'
+        annotationProcessor 'org.projectlombok:lombok'
+        testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+        implementation 'org.springframework.boot:spring-boot-starter-webflux'
+        testImplementation 'org.springframework.boot:spring-boot-starter-test'
+        testImplementation 'io.projectreactor:reactor-test'
+    }
+
+    jacocoTestReport {
+        reports {
+            html.enabled = true // human readable
+            xml.enabled = true // required by coveralls
+        }
+    }
+
+    def querydslSrcDir = 'src/main/generated'
+
+    querydsl {
+        jpa = true
+        querydslSourcesDir = querydslSrcDir
+    }
+
+    sourceSets {
+        main {
+            java {
+                srcDirs = ['src/main/java', querydslSrcDir]
+            }
+        }
+    }
+
+    compileQuerydsl{
+        options.annotationProcessorPath = configurations.querydsl
+    }
+
+    configurations {
+        querydsl.extendsFrom compileClasspath
+    }
+
+}
+
+
+task jacocoRootReport(type: JacocoReport) {
+    description = 'Generates an aggregate report from all subprojects'
+    dependsOn = subprojects.test
+    sourceDirectories = files(subprojects.sourceSets.main.allSource.srcDirs)
+    classDirectories =  files(subprojects.sourceSets.main.output)
+    executionData = files(subprojects.jacocoTestReport.executionData)
+    reports {
+        html.enabled = true // human readable
+        xml.enabled = true // required by coveralls
+    }
+}
+
+coveralls {
+    sourceDirs = subprojects.sourceSets.main.allSource.srcDirs.flatten()
+    jacocoReportPath = "${buildDir}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml"
+}
+
+project(':entity') {
+
+}
+
+project(':api') {
+
+    apply plugin: 'org.springframework.boot'
+    apply plugin: 'io.spring.dependency-management'
+    apply plugin: 'war'
+
+    bootJar {
+        manifest {
+            attributes 'Start-Class': 'com.test.api.ApiApplication'
+        }
+    }
+
+    bootWar {
+        manifest {
+            attributes 'Start-Class': 'com.test.api.ApiApplication'
+        }
+    }
+
+    dependencies {
+        compile project(':entity')
+        // https://mvnrepository.com/artifact/com.h2database/h2
+        compile group: 'com.h2database', name: 'h2', version: '1.4.199'
+    }
+}
